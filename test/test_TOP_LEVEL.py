@@ -1,10 +1,7 @@
 import os
-from decimal import Decimal
 
 import pytest
 import cocotb
-from cocotb.binary import BinaryValue
-from cocotb.triggers import Timer, RisingEdge, FallingEdge
 from cocotb.clock import Clock
 
 import utils
@@ -38,18 +35,17 @@ class TOP_LEVEL(utils.DUT):
     stage_wb = STAGE_WB
 
 
-@cocotb.test()
-async def tb_TOP_LEVEL_case_1(dut: TOP_LEVEL):
+@TOP_LEVEL.testcase
+async def tb_TOP_LEVEL_case_1(dut: TOP_LEVEL, trace: utils.Trace):
     values_destination = [
         "00000000000000000000000000000000",
         "00000000000000000000000000000000",
-        "00000000000000000000000000000000",
-        "00000000000000000000000000000000",
+        "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU",
         "00000000000000000001000000000000",
         "00000000000000000001000000000000",
         "00000000000000000001000000000000",
         "00000000000000000001000000000000",
-        #"00000000000000000000000000000000",
+        "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU",
     ]
 
     clock = Clock(dut.clock, 2_000_000_000, units="fs")
@@ -59,11 +55,8 @@ async def tb_TOP_LEVEL_case_1(dut: TOP_LEVEL):
     for index, (destination, ) in enumerate(
         zip(values_destination)
     ):
-
-        await RisingEdge(dut.clock)
-
-        utils.assert_output(dut.stage_wb.destination, destination, f"At clock {index}.")
-        await Timer(Decimal(clock.period), units="fs")
+        await trace.cycle()
+        yield trace.check(dut.stage_wb.destination, destination, f"At clock {index}.")
 
 
 def test_TOP_LEVEL_synthesis():
